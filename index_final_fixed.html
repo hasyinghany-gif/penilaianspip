@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aplikasi Penjamin Kualitas Maturitas SPIP</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--brand:#0d6efd;--grade-a:#16a34a;--grade-b:#fde047;--grade-c:#facc15;--grade-d:#f59e0b;--grade-e:#dc2626}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f7f9fc}
+    .container-narrow{max-width:1080px}
+    .card-rounded{border:0;border-radius:16px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .badge[data-grade]{border-radius:999px;padding:.45rem .75rem;font-weight:600;min-width:2.25rem;display:inline-block}
+    .badge[data-grade="A"]{background:var(--grade-a)!important;color:#fff!important}
+    .badge[data-grade="B"]{background:var(--grade-b)!important;color:#111!important}
+    .badge[data-grade="C"]{background:var(--grade-c)!important;color:#111!important}
+    .badge[data-grade="D"]{background:var(--grade-d)!important;color:#fff!important}
+    .badge[data-grade="E"]{background:var(--grade-e)!important;color:#fff!important}
+  </style>
+</head>
+<body>
+  <main class="container container-narrow py-4">
+    <div class="card card-rounded mb-3">
+      <div class="card-body">
+        <h1 class="h3 fw-bold text-primary mb-1">Penjamin Kualitas Maturitas Penyelenggaraan SPIP</h1>
+        <div class="text-muted">Periode Penilaian: 01 Juli 2024 s.d. 30 Juni 2025</div>
+        <div class="small text-muted">KK 3.1 · Penilaian Struktur &amp; Proses Efektivitas dan Efisiensi</div>
+      </div>
+    </div>
+    <div class="card card-rounded mb-3">
+      <div class="card-body">
+        <label for="satker-select" class="form-label fw-semibold"><i class="bi bi-building me-1"></i>Pilih Unit Organisasi (Unor)</label>
+        <div class="row g-2">
+          <div class="col-md-8"><select id="satker-select" class="form-select" aria-label="Pilih Unit Organisasi"></select></div>
+          <div class="col-md-4 d-flex align-items-center gap-2">
+            <button id="btn-dashboard" class="btn btn-outline-secondary"><i class="bi bi-speedometer2 me-1"></i>Dashboard</button>
+            <button id="btn-export" class="btn btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>Export PDF</button>
+          </div>
+        </div>
+      </div>
+      <div class="progress rounded-0" role="progressbar" aria-label="Progress penyelesaian" aria-valuemin="0" aria-valuemax="100">
+        <div id="progress-bar" class="progress-bar" style="width:0%">0%</div>
+      </div>
+    </div>
+    <div class="card card-rounded mb-3">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="px-3">Kode</th>
+                <th class="px-3">Uraian Parameter</th>
+                <th class="px-3 text-center">Status</th>
+                <th class="px-3 text-center">Main</th>
+                <th class="px-3 text-center">Aksi</th>
+                <th class="px-3 text-center">TOC</th>
+                <th class="px-3 text-center">Grade</th>
+              </tr>
+            </thead>
+            <tbody id="assessment-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="loader" class="text-center p-5">
+      <div class="spinner-border text-primary" role="status" aria-live="polite" aria-busy="true">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted mb-0">Menghubungkan ke database...</p>
+      <p id="loader-tip" class="small text-muted">Untuk demo ini, data dummy digunakan.</p>
+    </div>
+  </main>
+  <div class="modal fade" id="preview-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 id="preview-modal-title" class="modal-title h5">Preview</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body p-0">
+          <iframe id="preview-iframe" style="width:100%;height:70vh;border:0"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="toc-modal" tabindex="-1" aria-labelledby="tocTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h1 class="modal-title h5" id="tocTitle">Test of Control (Pre-Assessment)</h1>
+            <p id="toc-parameter-title" class="text-muted small mb-0"></p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <form id="toc-form" novalidate>
+            <input type="hidden" id="toc-parameter-code">
+            <input type="hidden" id="toc-unit">
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="toc-grade" class="form-label">Pilih Grade yang diuji</label>
+                <select id="toc-grade" class="form-select" required>
+                  <option value="A">A</option><option value="B">B</option>
+                  <option value="C" selected>C</option><option value="D">D</option><option value="E">E</option>
+                </select>
+              </div>
+              <div class="col-md-8 d-flex align-items-end gap-2">
+                <button type="button" id="toc-load-drive" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-google me-1"></i> Muat Dokumen Drive
+                </button>
+                <button type="button" id="toc-open-folder" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-folder2-open me-1"></i> Buka Folder Drive
+                </button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h3 class="h6 fw-semibold mb-2">Kriteria &amp; Parameter</h3>
+              <div id="toc-criteria" class="p-3 bg-light border rounded" style="max-height:220px;overflow:auto">
+                <div class="text-muted">Pilih grade untuk memuat kriteria…</div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <h3 class="h6 fw-semibold mb-2">Bukti Dukung (Google Drive)</h3>
+              <div id="toc-drive-files" class="list-group list-group-flush small">
+                <div class="text-muted px-2 py-1">Klik “Muat Dokumen Drive”.</div>
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-lg-8">
+                <label for="toc-notes" class="form-label">Catatan Pemeriksa</label>
+                <textarea id="toc-notes" class="form-control" rows="3"></textarea>
+              </div>
+              <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <i class="bi bi-activity text-primary"></i><strong>Skor Kepatuhan</strong>
+                    </div>
+                    <div class="h4 mb-2"><span id="toc-score">0</span>%</div>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge" id="toc-suggest-badge" data-grade="E">E</span>
+                      <span class="small text-muted">Rekomendasi Grade</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-hint mt-2 small text-muted">
+                  Baku: ≥90 A, 75–89 B, 60–74 C, 40–59 D, &lt;40 E.
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+          <button id="toc-save" class="btn btn-primary">💾 Simpan Pre-Assessment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script>
+    var SATKER_LIST=["Sestama","Inspektorat","Pusdatin","Puslat","D1","D3","D4"];
+    var ASSESSMENT_STRUCTURE=[
+      {kode_parameter:"1.1.1",uraian_parameter:"Konteks organisasi terdokumentasi",grades:[
+        {grade:"A",kriteria:"Semua proses terstandar dan dievaluasi berkala."},
+        {grade:"B",kriteria:"Sebagian besar proses terstandar dan dipantau."},
+        {grade:"C",kriteria:"Proses dasar tersedia dan dijalankan."},
+        {grade:"D",kriteria:"Dokumentasi sebagian, pelaksanaan belum konsisten."},
+        {grade:"E",kriteria:"Belum ada dokumentasi yang memadai."}]},
+      {kode_parameter:"1.1.2",uraian_parameter:"Penetapan tujuan & indikator",grades:[
+        {grade:"A",kriteria:"Tujuan terukur selaras sasaran strategis; review triwulanan."},
+        {grade:"C",kriteria:"Tujuan & indikator tersedia; monitoring periodik."},
+        {grade:"E",kriteria:"Belum ada tujuan terukur."}]}
+    ];
+    function findParameterByKode(k){for(var i=0;i<ASSESSMENT_STRUCTURE.length;i++){var p=ASSESSMENT_STRUCTURE[i];if(p.kode_parameter===k||p.kode===k)return p;}return null;}
+    function criteriaTextByGrade(p,g){if(!p||!p.grades)return"";for(var i=0;i<p.grades.length;i++){if(p.grades[i].grade===g)return p.grades[i].kriteria||"";}return"";}
+    function explodeCriteria(t){if(!t)return[];var l=t.split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean);if(l.length===1){return t.split(/;\s+|\.?\s*-\s+|•\s+|\n+/).map(function(s){return s.trim()}).filter(Boolean)}return l.map(function(s){return s.replace(/^[\-•\d\.\)\s]+/,"")}).filter(Boolean)}
+    function suggestGradeByScore(p){if(p>=90)return"A";if(p>=75)return"B";if(p>=60)return"C";if(p>=40)return"D";return"E"}
+    function updateSuggestBadge(p){var g=suggestGradeByScore(p),b=document.getElementById("toc-suggest-badge");b.setAttribute("data-grade",g);b.textContent=g;document.getElementById("toc-score").textContent=String(Math.round(p))}
+    (function initSatker(){var s=document.getElementById("satker-select");SATKER_LIST.forEach(function(x){var o=document.createElement("option");o.value=x;o.textContent=x;s.appendChild(o)});s.value="Sestama"})();
+    function renderRows(u){var tb=document.getElementById("assessment-table-body"),h="";ASSESSMENT_STRUCTURE.forEach(function(p){var k=p.kode_parameter||p.kode;h+='<tr><td class="px-3">'+k+"</td><td class="px-3">"+(p.uraian_parameter||"")+'</td><td class="px-3 text-center"><span class="badge text-bg-secondary">Draft</span></td><td class="px-3 text-center"><button class="btn btn-sm btn-outline-secondary" data-main="'+k+'"><i class="bi bi-list-check me-1"></i> Main</button></td><td class="px-3 text-center"><button class="btn btn-sm btn-primary" data-aksi="'+k+'"><i class="bi bi-pencil-square me-1"></i> Nilai</button></td><td class="px-3 text-center"><button class="btn btn-sm btn-outline-primary" data-toc="'+k+'"><i class="bi bi-shield-check me-1"></i> TOC</button></td><td class="px-3 text-center"><span class="badge" data-grade="E">E</span></td></tr>'});tb.innerHTML=h;Array.prototype.slice.call(tb.querySelectorAll("[data-main]")).forEach(function(b){b.addEventListener("click",function(){var k=b.getAttribute("data-main"),p=findParameterByKode(k),html=(p&&p.grades||[]).map(function(g){return'<div class="mb-2"><strong>Grade '+g.grade+'</strong><div class="small text-muted">'+(g.kriteria||"")+"</div></div>"}).join("")||'<div class="text-muted">Tidak ada kriteria.</div>';document.getElementById("preview-modal-title").textContent="Main • "+k;document.getElementById("preview-iframe").srcdoc='<html><body style="font-family:Inter,system-ui;padding:16px"><h3 style="margin:0 0 8px">Uraian Parameter</h3><div style="margin:0 0 12px">'+(p?(p.uraian_parameter||""):"")+'</div><h3 style="margin:0 0 8px">Kriteria per Grade</h3>'+html+"</body></html>";new bootstrap.Modal(document.getElementById("preview-modal")).show()})});Array.prototype.slice.call(tb.querySelectorAll("[data-aksi]")).forEach(function(b){b.addEventListener("click",function(){alert("Buka modal penilaian Aksi (integrasikan dengan modul penilaian Anda).")})});Array.prototype.slice.call(tb.querySelectorAll("[data-toc]")).forEach(function(b){b.addEventListener("click",function(){var k=b.getAttribute("data-toc"),u=document.getElementById("satker-select").value||"Sestama";openTocModal(k,u)})})}
+    function openTocModal(k,u){var p=findParameterByKode(k);document.getElementById("toc-parameter-code").value=k;document.getElementById("toc-unit").value=u;document.getElementById("toc-parameter-title").textContent=k+" — "+(p?(p.uraian_parameter||""):"");document.getElementById("toc-grade").value="C";document.getElementById("toc-criteria").innerHTML='<div class="text-muted">Pilih grade untuk memuat kriteria…</div>';document.getElementById("toc-drive-files").innerHTML='<div class="text-muted px-2 py-1">Klik “Muat Dokumen Drive”.</div>';document.getElementById("toc-notes").value="";document.getElementById("toc-score").textContent="0";var b=document.getElementById("toc-suggest-badge");b.setAttribute("data-grade","E");b.textContent="E";new bootstrap.Modal(document.getElementById("toc-modal")).show()}
+    document.getElementById("toc-grade").addEventListener("change",function(){var k=document.getElementById("toc-parameter-code").value,p=findParameterByKode(k),g=document.getElementById("toc-grade").value,items=explodeCriteria(criteriaTextByGrade(p,g)),wrap=document.getElementById("toc-criteria");if(!items.length){wrap.innerHTML='<div class="text-muted">Belum ada kriteria untuk grade '+g+".</div>";updateSuggestBadge(0);return}wrap.innerHTML=items.map(function(t,i){return'<div class="form-check mb-1"><input class="form-check-input toc-crit" type="checkbox" id="crit-'+i+'"><label class="form-check-label" for="crit-'+i+'">'+t+"</label></div>"}).join("");Array.prototype.slice.call(wrap.querySelectorAll(".toc-crit")).forEach(function(cb){cb.addEventListener("change",function(){var list=Array.prototype.slice.call(wrap.querySelectorAll(".toc-crit")),checked=list.filter(function(x){return x.checked}).length;updateSuggestBadge(checked/list.length*100)})});updateSuggestBadge(0)});
+    function driveFolderIdFor(u,g){return null}function listDriveFolder(id){return Promise.resolve([])}
+    document.getElementById("toc-load-drive").addEventListener("click",function(){var u=document.getElementById("toc-unit").value,g=document.getElementById("toc-grade").value,fid=driveFolderIdFor(u,g),el=document.getElementById("toc-drive-files");if(!fid){el.innerHTML='<div class="text-danger px-2 py-1">Folder Drive untuk '+u+" grade "+g+" belum diset.</div>";return}el.innerHTML='<div class="px-2 py-1 text-muted">Memuat…</div>';listDriveFolder(fid).then(function(files){if(!files.length){el.innerHTML='<div class="text-muted px-2 py-1">Tidak ada file pada folder ini.</div>';return}el.innerHTML=files.map(function(f){return'<label class="list-group-item d-flex align-items-center justify-content-between gap-2"><div class="me-auto"><div class="fw-semibold">'+f.name+'</div><div class="small text-muted">'+new Date(f.modifiedTime).toLocaleString()+'</div></div><div class="d-flex align-items-center gap-2"><a class="btn btn-sm btn-outline-primary" target="_blank" href="'+f.webViewLink+'"><i class="bi bi-box-arrow-up-right"></i></a><button type="button" class="btn btn-sm btn-outline-secondary" data-preview="'+f.id+'"><i class="bi bi-eye"></i></button><div class="form-check ms-2"><input class="form-check-input toc-rel" type="checkbox" data-fileid="'+f.id+'"><label class="form-check-label small">Relevan</label></div></div></label>'}).join("");Array.prototype.slice.call(el.querySelectorAll("[data-preview]")).forEach(function(btn){btn.addEventListener("click",function(){var id=btn.getAttribute("data-preview");document.getElementById("preview-iframe").src="https://drive.google.com/file/d/"+id+"/preview";new bootstrap.Modal(document.getElementById("preview-modal")).show()})})}).catch(function(e){el.innerHTML='<div class="text-danger px-2 py-1">Gagal memuat Drive: '+e.message+"</div>"})});
+    document.getElementById("toc-open-folder").addEventListener("click",function(){var u=document.getElementById("toc-unit").value,g=document.getElementById("toc-grade").value,fid=driveFolderIdFor(u,g);if(fid)window.open("https://drive.google.com/drive/folders/"+fid,"_blank")});
+    renderRows("Sestama");document.getElementById("satker-select").addEventListener("change",function(e){renderRows(e.target.value)});
+  </script>
+</body>
+</html>
